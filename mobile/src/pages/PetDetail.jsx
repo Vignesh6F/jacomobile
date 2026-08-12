@@ -29,20 +29,37 @@ function PetDetail() {
     return <div className="page-container" style={{ textAlign: 'center', padding: '3rem' }}>Pet listing not found.</div>;
   }
 
+  const now = new Date();
+  const isProBoosted = pet.isBoosted && pet.boostExpiresAt && new Date(pet.boostExpiresAt) > now;
+  const isCatFeatured = pet.isFeaturedCategory && pet.featuredCategoryExpiresAt && new Date(pet.featuredCategoryExpiresAt) > now;
+
   return (
     <div className="page-container">
-      <div className="card" style={{ padding: 0 }}>
-        <img 
-          src={(pet.images && pet.images[0]) || 'https://via.placeholder.com/600x400'} 
-          alt={pet.title} 
-          style={{ width: '100%', height: '260px', objectFit: 'cover' }}
-        />
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ position: 'relative' }}>
+          <img 
+            src={(pet.images && pet.images[0]) || 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=500&q=60'} 
+            alt={pet.title} 
+            style={{ width: '100%', height: '260px', objectFit: 'cover' }}
+          />
+          {isProBoosted && (
+            <span style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: '#7C3AED', color: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+              🚀 Pro Boosted
+            </span>
+          )}
+          {isCatFeatured && !isProBoosted && (
+            <span style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: '#D97706', color: 'white', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+              ⭐ Category Featured
+            </span>
+          )}
+        </div>
+
         <div style={{ padding: '1.25rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1 style={{ fontSize: '1.35rem', fontWeight: 700 }}>{pet.title || pet.name}</h1>
               <div style={{ color: 'var(--color-primary)', fontSize: '1.3rem', fontWeight: 700, margin: '0.25rem 0' }}>
-                ${pet.price || 0}
+                ₹{pet.price?.toLocaleString('en-IN') || 0}
               </div>
             </div>
             <button style={{ background: '#fecdd3', color: '#e11d48', border: 'none', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }}>
@@ -50,12 +67,31 @@ function PetDetail() {
             </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
             <MapPin size={14} />
             <span>{pet.location || pet.city || 'Verified Location'}</span>
           </div>
 
-          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '1rem' }}>
+          {/* Verification Badges */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1rem' }}>
+            {(pet.sellerId?.isVerifiedSeller || pet.sellerId?.businessVerified) && (
+              <span style={{ fontSize: '0.75rem', backgroundColor: '#EFF6FF', color: '#1D4ED8', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold', border: '1px solid #BFDBFE' }}>
+                ✅ Verified Store
+              </span>
+            )}
+            {pet.sellerId?.phoneVerified && (
+              <span style={{ fontSize: '0.75rem', backgroundColor: '#E0F2FE', color: '#0369A1', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold', border: '1px solid #BAE6FD' }}>
+                ✓ Phone Verified
+              </span>
+            )}
+            {pet.sellerId?.emailVerified && (
+              <span style={{ fontSize: '0.75rem', backgroundColor: '#E0F2FE', color: '#0369A1', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold', border: '1px solid #BAE6FD' }}>
+                ✓ Email Verified
+              </span>
+            )}
+          </div>
+
+          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.5rem' }}>Description</h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--color-text)', lineHeight: 1.6 }}>
               {pet.description || 'Healthy, vaccinated, and well cared for. Contact the verified seller directly for details and viewing.'}

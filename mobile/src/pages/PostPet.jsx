@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../config';
 
 function PostPet({ user }) {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('dogs');
+  const [category, setCategory] = useState('Dog');
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
@@ -61,19 +61,20 @@ function PostPet({ user }) {
               value={category}
               onChange={e => setCategory(e.target.value)}
             >
-              <option value="dogs">Dogs</option>
-              <option value="cats">Cats</option>
-              <option value="birds">Birds</option>
-              <option value="fish">Fish</option>
+              <option value="Dog">Dogs</option>
+              <option value="Cat">Cats</option>
+              <option value="Bird">Birds</option>
+              <option value="Fish">Fish</option>
+              <option value="Parrots">Parrots</option>
             </select>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Price ($)</label>
+            <label className="form-label">Price (₹)</label>
             <input 
               type="number" 
               className="form-input" 
-              placeholder="e.g. 350"
+              placeholder="e.g. 15000"
               value={price}
               onChange={e => setPrice(e.target.value)}
               required
@@ -85,7 +86,7 @@ function PostPet({ user }) {
             <input 
               type="text" 
               className="form-input" 
-              placeholder="e.g. New York, NY"
+              placeholder="e.g. Mumbai, MH"
               value={location}
               onChange={e => setLocation(e.target.value)}
               required

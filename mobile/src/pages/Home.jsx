@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { Search, MapPin, Tag } from 'lucide-react';
+import { MapPin, ShieldCheck } from 'lucide-react';
 
 function Home() {
   const [pets, setPets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState('All');
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/pets`)
       .then(res => {
-        setPets(res.data.pets || res.data || []);
+        const petList = res.data.pets || res.data || [];
+        setPets(Array.isArray(petList) ? petList : []);
         setLoading(false);
       })
       .catch(err => {
@@ -22,16 +23,17 @@ function Home() {
   }, []);
 
   const categories = [
-    { id: 'all', name: 'All Pets', icon: '🐾' },
-    { id: 'dogs', name: 'Dogs', icon: '🐶' },
-    { id: 'cats', name: 'Cats', icon: '🐱' },
-    { id: 'birds', name: 'Birds', icon: '🦜' },
-    { id: 'fish', name: 'Fish', icon: '🐠' }
+    { id: 'All', name: 'All Pets', icon: '🐾' },
+    { id: 'Dog', name: 'Dogs', icon: '🐶' },
+    { id: 'Cat', name: 'Cats', icon: '🐱' },
+    { id: 'Bird', name: 'Birds', icon: '🦜' },
+    { id: 'Fish', name: 'Fish', icon: '🐠' },
+    { id: 'Parrots', name: 'Parrots', icon: '🦜' }
   ];
 
-  const filteredPets = activeCategory === 'all' 
+  const filteredPets = activeCategory === 'All' 
     ? pets 
-    : pets.filter(p => (p.category || '').toLowerCase() === activeCategory);
+    : pets.filter(p => (p.category || '').toLowerCase() === activeCategory.toLowerCase());
 
   return (
     <div className="page-container">
@@ -64,7 +66,7 @@ function Home() {
       </div>
 
       <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem' }}>
-        Featured Pets ({filteredPets.length})
+        Available Listings ({filteredPets.length})
       </h2>
 
       {loading ? (
@@ -77,22 +79,56 @@ function Home() {
         </div>
       ) : (
         <div className="pet-grid">
-          {filteredPets.map(pet => (
-            <Link to={`/pet/${pet._id || pet.id}`} key={pet._id || pet.id} className="pet-card">
-              <img 
-                src={(pet.images && pet.images[0]) || 'https://via.placeholder.com/300x200?text=Pet+Photo'} 
-                alt={pet.title || pet.name} 
-              />
-              <div className="pet-card-body">
-                <div className="pet-card-title">{pet.title || pet.name || 'Pet Listing'}</div>
-                <div className="pet-card-price">${pet.price || pet.cost || 0}</div>
-                <div className="pet-card-location">
-                  <MapPin size={12} />
-                  <span>{pet.location || pet.city || 'Location N/A'}</span>
+          {filteredPets.map(pet => {
+            const now = new Date();
+            const isProBoosted = pet.isBoosted && pet.boostExpiresAt && new Date(pet.boostExpiresAt) > now;
+            const isCatFeatured = pet.isFeaturedCategory && pet.featuredCategoryExpiresAt && new Date(pet.featuredCategoryExpiresAt) > now;
+            const isAdminFeatured = pet.isFeatured && !pet.isBoosted && !pet.isFeaturedCategory;
+            const isPromoted = isProBoosted || isCatFeatured || isAdminFeatured;
+
+            return (
+              <Link to={`/pet/${pet._id || pet.id}`} key={pet._id || pet.id} className="pet-card" style={{ position: 'relative', textDecoration: 'none' }}>
+                {isPromoted && (
+                  <span 
+                    style={{ 
+                      position: 'absolute', 
+                      top: '8px', 
+                      left: '8px', 
+                      backgroundColor: isProBoosted ? '#7c3aed' : '#eab308', 
+                      color: 'white', 
+                      padding: '3px 7px', 
+                      borderRadius: '4px', 
+                      fontSize: '0.7rem', 
+                      fontWeight: 'bold', 
+                      zIndex: 10,
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                    }}
+                  >
+                    ★ {isProBoosted ? 'Boosted' : 'Featured'}
+                  </span>
+                )}
+
+                <img 
+                  src={(pet.images && pet.images[0]) || 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=500&q=60'} 
+                  alt={pet.title || pet.name} 
+                  style={{ width: '100%', height: '140px', objectFit: 'cover' }}
+                />
+                <div className="pet-card-body">
+                  <div className="pet-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.25rem' }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pet.title || pet.name || 'Pet Listing'}</span>
+                    {(pet.sellerId?.isVerifiedSeller || pet.sellerId?.businessVerified) && (
+                      <ShieldCheck size={14} color="#1D4ED8" title="Verified Store" />
+                    )}
+                  </div>
+                  <div className="pet-card-price">₹{pet.price?.toLocaleString('en-IN') || 0}</div>
+                  <div className="pet-card-location">
+                    <MapPin size={12} />
+                    <span>{pet.location || pet.city || 'Location N/A'}</span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
