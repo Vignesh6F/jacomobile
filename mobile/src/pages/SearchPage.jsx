@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { Search, MapPin } from 'lucide-react';
+import { Search, MapPin, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function SearchPage() {
@@ -14,7 +14,8 @@ function SearchPage() {
     if (!query.trim()) return;
     axios.get(`${API_BASE_URL}/api/pets/search?q=${encodeURIComponent(query)}`)
       .then(res => {
-        setResults(res.data.pets || res.data || []);
+        const petList = res.data.pets || res.data || [];
+        setResults(Array.isArray(petList) ? petList : []);
         setSearched(true);
       })
       .catch(err => {
@@ -49,19 +50,52 @@ function SearchPage() {
             </p>
           ) : (
             <div className="pet-grid">
-              {results.map(pet => (
-                <Link to={`/pet/${pet._id || pet.id}`} key={pet._id || pet.id} className="pet-card">
-                  <img src={(pet.images && pet.images[0]) || 'https://via.placeholder.com/300x200'} alt={pet.title} />
-                  <div className="pet-card-body">
-                    <div className="pet-card-title">{pet.title || pet.name}</div>
-                    <div className="pet-card-price">${pet.price || 0}</div>
-                    <div className="pet-card-location">
-                      <MapPin size={12} />
-                      <span>{pet.location || 'N/A'}</span>
+              {results.map(pet => {
+                const now = new Date();
+                const isProBoosted = pet.isBoosted && pet.boostExpiresAt && new Date(pet.boostExpiresAt) > now;
+                const isCatFeatured = pet.isFeaturedCategory && pet.featuredCategoryExpiresAt && new Date(pet.featuredCategoryExpiresAt) > now;
+                const isAdminFeatured = pet.isFeatured && !pet.isBoosted && !pet.isFeaturedCategory;
+                const isPromoted = isProBoosted || isCatFeatured || isAdminFeatured;
+
+                return (
+                  <Link to={`/pet/${pet._id || pet.id}`} key={pet._id || pet.id} className="pet-card" style={{ position: 'relative', textDecoration: 'none' }}>
+                    {isPromoted && (
+                      <span 
+                        style={{ 
+                          position: 'absolute', 
+                          top: '8px', 
+                          left: '8px', 
+                          backgroundColor: isProBoosted ? '#7c3aed' : '#eab308', 
+                          color: 'white', 
+                          padding: '3px 7px', 
+                          borderRadius: '4px', 
+                          fontSize: '0.7rem', 
+                          fontWeight: 'bold', 
+                          zIndex: 10,
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                        }}
+                      >
+                        ★ {isProBoosted ? 'Boosted' : 'Featured'}
+                      </span>
+                    )}
+
+                    <img src={(pet.images && pet.images[0]) || 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=500&q=60'} alt={pet.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                    <div className="pet-card-body">
+                      <div className="pet-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.25rem' }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pet.title || pet.name}</span>
+                        {(pet.sellerId?.isVerifiedSeller || pet.sellerId?.businessVerified) && (
+                          <ShieldCheck size={14} color="#1D4ED8" title="Verified Store" />
+                        )}
+                      </div>
+                      <div className="pet-card-price">₹{pet.price?.toLocaleString('en-IN') || 0}</div>
+                      <div className="pet-card-location">
+                        <MapPin size={12} />
+                        <span>{pet.location || 'N/A'}</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </>
